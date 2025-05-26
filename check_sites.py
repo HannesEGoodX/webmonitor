@@ -3,13 +3,23 @@ import ssl
 import socket
 import json
 from datetime import datetime
-from urllib.parse import urlparse # Added this import
+from urllib.parse import urlparse
 
 # Your sites to check
 sites = [
     "https://gxqit.co.za",
     "https://goodx.co.za",
-    "https://goodx.healthcare",
+    "https://goodxhealthcare.ca",
+    "https://goodx.co.nz",
+    "https://goodxnamibia.com",
+    "https://goodx.co.bw",
+    "https://goodx.co.uk",
+    "https://goodx.us",
+    "https://goodx.international",
+    "https://goodxeye.com",
+    "https://goodx.cloud",
+    "https://aditiv.co.za",
+    "https://www.imprimatur.co.za",
 ]
 
 def check_ssl_expiry(hostname):
@@ -28,21 +38,22 @@ def check_site(url):
     status = "offline"
     ssl_status = "unknown"
     ssl_days_left = None
+    response_time = None # Initialize response_time
 
     try:
         response = requests.get(url, timeout=10)
+        response_time = round(response.elapsed.total_seconds(), 2) # Capture response time in seconds, rounded to 2 decimal places
         if response.status_code == 200:
             status = "online"
         else:
             status = f"error {response.status_code}"
     except Exception:
         status = "offline"
+        response_time = None # Set to None if request fails
 
     try:
-        # Improved hostname extraction using urlparse
         parsed_url = urlparse(url)
         hostname = parsed_url.netloc
-        # Ensure hostname is not empty or just a port
         if not hostname or ':' in hostname:
             raise ValueError(f"Could not extract a valid hostname from {url}")
 
@@ -61,7 +72,8 @@ def check_site(url):
         "url": url,
         "status": status,
         "ssl_status": ssl_status,
-        "ssl_days_left": ssl_days_left
+        "ssl_days_left": ssl_days_left,
+        "response_time": response_time # Add response_time to the returned dict
     }
 
 def main():

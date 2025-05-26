@@ -4,41 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Website Status Monitor</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 2rem;
-        background: #f4f7f8;
-        color: #333;
-      }
-      h1 {
-        color: #0052cc;
-      }
-      .site {
-        background: white;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgb(0 0 0 / 0.1);
-      }
-      .up {
-        color: green;
-        font-weight: bold;
-      }
-      .down {
-        color: red;
-        font-weight: bold;
-      }
-      .ssl-ok {
-        color: green;
-      }
-      .ssl-expired {
-        color: red;
-      }
-    </style>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <h1>Website Status Monitor</h1>
+
+    <div class="monitor-button-container">
+      <button id="monitorNowButton" class="monitor-button">Monitor Now</button>
+    </div>
+
     <div id="sites-container">Loading status...</div>
     <footer>
       <p>Last updated: <span id="last-updated">Loading...</span></p>
@@ -66,15 +40,32 @@
                 ? ` (expires in ${site.ssl_days_left} days)`
                 : "";
 
+            const responseTime =
+              site.response_time !== null
+                ? `Response Time: ${site.response_time} s`
+                : `Response Time: N/A`;
+
+            // Adjust status class for specific error codes if desired
+            let statusClass = "unknown-status"; // Default for unknown/error strings
+            if (site.status === "online") {
+              statusClass = "up";
+            } else if (
+              site.status === "offline" ||
+              site.status.startsWith("error")
+            ) {
+              statusClass = "down"; // Use 'down' for any offline or error code
+            }
+
             div.innerHTML = `
-        <h2>${site.url}</h2>
-        <p>Status: <span class="${site.status === "online" ? "up" : "down"}">${
+                <h2>${site.url}</h2>
+                <p>Status: <span class="${statusClass}">${
               site.status
             }</span></p>
-        <p>SSL Certificate: <span class="${
-          site.ssl_status === "valid" ? "ssl-ok" : "ssl-expired"
-        }">${site.ssl_status}${sslDaysLeft}</span></p>
-      `;
+                <p>SSL Certificate: <span class="${
+                  site.ssl_status === "valid" ? "ssl-ok" : "ssl-expired"
+                }">${site.ssl_status}${sslDaysLeft}</span></p>
+                <p>${responseTime}</p>
+            `;
 
             container.appendChild(div);
           });
@@ -86,7 +77,21 @@
         }
       }
 
+      // Initial load
       loadStatus();
+
+      document
+        .getElementById("monitorNowButton")
+        .addEventListener("click", () => {
+          // This button currently just reloads the status.json from the deployed site.
+          // Triggering a GitHub Action securely from here requires more advanced setup (e.g., a serverless function)
+          // to avoid exposing sensitive tokens.
+          // For now, it simply refreshes the displayed status from the latest 'status.json' available.
+          loadStatus();
+          alert(
+            "Status refreshed from the latest data. To trigger a new check, you'd manually run the workflow on GitHub or set up an advanced trigger."
+          );
+        });
     </script>
   </body>
 </html>

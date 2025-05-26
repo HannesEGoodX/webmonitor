@@ -1,0 +1,165 @@
+/* General Body and Typography */
+body {
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  margin: 0;
+  padding: 2rem;
+  background: linear-gradient(
+    to right,
+    #ece9e6,
+    #ffffff
+  ); /* Subtle gradient background */
+  color: #333;
+  line-height: 1.6;
+  min-height: 100vh; /* Ensure body takes full viewport height */
+  display: flex;
+  flex-direction: column;
+}
+
+h1 {
+  color: #0056b3;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Container for the monitor button */
+.monitor-button-container {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Monitor Now Button Styling */
+.monitor-button {
+  background-color: #007bff;
+  color: white;
+  padding: 12px 25px;
+  border: none;
+  border-radius: 30px; /* More rounded pill shape */
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease,
+    box-shadow 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+  outline: none; /* Remove outline on focus */
+}
+
+.monitor-button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px); /* Slight lift effect */
+  box-shadow: 0 6px 12px rgba(0, 123, 255, 0.3);
+}
+
+.monitor-button:active {
+  transform: translateY(0); /* Press down effect */
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+}
+
+/* Sites Container */
+#sites-container {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(300px, 1fr)
+  ); /* Responsive grid */
+  gap: 1.5rem; /* Space between cards */
+  flex-grow: 1; /* Allows container to grow and push footer down */
+}
+
+/* Individual Site Cards */
+.site {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px; /* More rounded corners */
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); /* Stronger, softer shadow */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.site:hover {
+  transform: translateY(-5px); /* Slight lift on hover */
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15); /* More prominent shadow on hover */
+}
+
+.site h2 {
+  color: #34495e;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+  word-break: break-all; /* Prevent long URLs from overflowing */
+}
+
+.site p {
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+/* Status Indicators */
+.up {
+  color: #28a745; /* Brighter green */
+  font-weight: bold;
+}
+.down {
+  color: #dc3545; /* Brighter red */
+  font-weight: bold;
+}
+.ssl-ok {
+  color: #28a745; /* Brighter green */
+}
+.ssl-expired {
+  color: #dc3545; /* Brighter red */
+  font-weight: bold;
+}
+.error-status {
+  color: #ffc107; /* Warning yellow for errors other than offline */
+  font-weight: bold;
+}
+.unknown-status {
+  color: #6c757d; /* Gray for unknown statuses */
+}
+
+/* Footer Styling */
+footer {
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+footer #last-updated {
+  font-weight: bold;
+  color: #495057;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  body {
+    padding: 1rem;
+  }
+  h1 {
+    font-size: 2rem;
+  }
+  .monitor-button {
+    font-size: 1rem;
+    padding: 10px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  #sites-container {
+    grid-template-columns: 1fr; /* Stack cards on very small screens */
+  }
+  .site {
+    padding: 1rem;
+  }
+  h1 {
+    font-size: 1.8rem;
+  }
+}
