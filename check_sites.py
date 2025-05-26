@@ -6,7 +6,7 @@ from datetime import datetime
 from urllib.parse import urlparse
 import logging
 
-# Configure logging to output to console (which GitHub Actions captures)
+# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Your sites to check
@@ -29,8 +29,7 @@ sites = [
 def check_ssl_expiry(hostname):
     try:
         context = ssl.create_default_context()
-        # Set a shorter timeout for SSL connection to avoid long hangs
-        with socket.create_connection((hostname, 443), timeout=3) as sock: # SSL handshake timeout remains 3s
+        with socket.create_connection((hostname, 443), timeout=3) as sock:
             with context.wrap_socket(sock, server_hostname=hostname) as ssock:
                 cert = ssock.getpeercert()
                 expiry_date = datetime.strptime(cert['notAfter'], '%b %d %H:%M:%S %Y %Z')
@@ -40,42 +39,57 @@ def check_ssl_expiry(hostname):
         logging.warning(f"SSL check failed for {hostname}: {e}")
         return None
 
-def check_site(url):
-    status = "offline"
+def check_site(url, num_pings=3, timeout=15): # Added num_pings and timeout parameters
+    successful_pings = 0
+    total_response_time = 0
+    final_status = "offline"
+    final_response_time = None
+
+    logging.info(f"Checking site: {url} with {num_pings} pings...")
+
+    for i in range(num_pings):
+        status_during_ping = "offline"
+        response_time_during_ping = None
+        try:
+            response = requests.get(url, timeout=timeout, verify=True)
+            response_time_during_ping = round(response.elapsed.total_seconds(), 2)
+
+            if response.status_code == 200:
+                status_during_ping = "online"
+                successful_pings += 1
+                total_response_time += response_time_during_ping
+                logging.info(f"  Ping {i+1} for {url}: Online (200 OK) in {response_time_during_ping}s")
+            else:
+                status_during_ping = f"error {response.status_code}"
+                logging.warning(f"  Ping {i+1} for {url}: Responded with status code {response.status_code}")
+
+        except requests.exceptions.Timeout:
+            status_during_ping = "offline (timeout)"
+            logging.error(f"  Ping {i+1} for {url}: Timed out after {timeout}s.")
+        except requests.exceptions.ConnectionError as e:
+            status_during_ping = "offline (connection error)"
+            logging.error(f"  Ping {i+1} for {url}: Connection error: {e}")
+        except requests.exceptions.RequestException as e:
+            status_during_ping = "offline (request error)"
+            logging.error(f"  Ping {i+1} for {url}: Request error: {e}")
+        except Exception as e:
+            status_during_ping = "offline (unexpected error)"
+            logging.error(f"  Ping {i+1} for {url}: Unexpected error: {e}")
+
+    if successful_pings == num_pings:
+        final_status = "online"
+        final_response_time = round(total_response_time / num_pings, 2)
+        logging.info(f"{url} is ONLINE (3 consecutive successful pings). Average response time: {final_response_time}s")
+    else:
+        final_status = f"offline ({successful_pings}/{num_pings} pings successful)"
+        logging.warning(f"{url} is OFFLINE ({successful_pings}/{num_pings} pings successful).")
+        # If any ping failed, response_time is N/A
+        final_response_time = None 
+
+
+    # SSL check part (remains unchanged)
     ssl_status = "unknown"
     ssl_days_left = None
-    response_time = None
-
-    try:
-        # Increased timeout for requests.get to 15 seconds
-        response = requests.get(url, timeout=15, verify=True)
-        response_time = round(response.elapsed.total_seconds(), 2)
-
-        if response.status_code == 200:
-            status = "online"
-            logging.info(f"{url} is online (200 OK), response time: {response_time}s")
-        else:
-            status = f"error {response.status_code}"
-            logging.warning(f"{url} responded with status code {response.status_code}")
-
-    except requests.exceptions.Timeout:
-        status = "offline (timeout)"
-        logging.error(f"{url} timed out after 15 seconds.")
-        response_time = None
-    except requests.exceptions.ConnectionError as e:
-        status = "offline (connection error)"
-        logging.error(f"{url} connection error: {e}")
-        response_time = None
-    except requests.exceptions.RequestException as e:
-        status = "offline (request error)"
-        logging.error(f"{url} request error: {e}")
-        response_time = None
-    except Exception as e:
-        status = "offline (unexpected error)"
-        logging.error(f"{url} unexpected error: {e}")
-        response_time = None
-
-    # SSL check part
     try:
         parsed_url = urlparse(url)
         hostname = parsed_url.netloc
@@ -99,10 +113,10 @@ def check_site(url):
 
     return {
         "url": url,
-        "status": status,
+        "status": final_status,
         "ssl_status": ssl_status,
         "ssl_days_left": ssl_days_left,
-        "response_time": response_time
+        "response_time": final_response_time
     }
 
 def main():
