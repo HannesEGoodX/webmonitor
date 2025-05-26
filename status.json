@@ -1,0 +1,23 @@
+{
+  "last_checked": "2025-05-26 08:35:15 UTC",
+  "sites": [
+    {
+      "url": "https://gxqit.co.za",
+      "status": "online",
+      "ssl_status": "valid",
+      "ssl_days_left": 40
+    },
+    {
+      "url": "https://goodx.co.za",
+      "status": "online",
+      "ssl_status": "valid",
+      "ssl_days_left": 69
+    },
+    {
+      "url": "https://goodx.healthcare",
+      "status": "online",
+      "ssl_status": "valid",
+      "ssl_days_left": 46
+    }
+  ]
+}
