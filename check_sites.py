@@ -3,6 +3,7 @@ import ssl
 import socket
 import json
 from datetime import datetime
+from urllib.parse import urlparse # Added this import
 
 # Your sites to check
 sites = [
@@ -38,7 +39,13 @@ def check_site(url):
         status = "offline"
 
     try:
-        hostname = url.split("//")[1].split("/")[0]
+        # Improved hostname extraction using urlparse
+        parsed_url = urlparse(url)
+        hostname = parsed_url.netloc
+        # Ensure hostname is not empty or just a port
+        if not hostname or ':' in hostname:
+            raise ValueError(f"Could not extract a valid hostname from {url}")
+
         days_left = check_ssl_expiry(hostname)
         if days_left is None:
             ssl_status = "unknown"

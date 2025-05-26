@@ -22,7 +22,7 @@ jobs:
         run: pip install requests
 
       - name: Run site check script
-        run: python check_files.py # or change to check_sites.py if you rename
+        run: python check_sites.py # Corrected from check_files.py
 
       - name: Commit and push status.json
         run: |
