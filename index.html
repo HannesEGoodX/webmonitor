@@ -45,20 +45,22 @@
                 ? `Response Time: ${site.response_time} s`
                 : `Response Time: N/A`;
 
-            // Adjust status class for specific error codes if desired
-            let statusClass = "unknown-status"; // Default for unknown/error strings
+            let statusClass = "unknown-status";
             if (site.status === "online") {
               statusClass = "up";
             } else if (
               site.status === "offline" ||
               site.status.startsWith("error")
             ) {
-              statusClass = "down"; // Use 'down' for any offline or error code
+              statusClass = "down";
             }
 
             div.innerHTML = `
-                <h2>${site.url}</h2>
-                <p>Status: <span class="${statusClass}">${
+                <h2><a href="${
+                  site.url
+                }" target="_blank" rel="noopener noreferrer">${
+              site.url
+            }</a></h2> <p>Status: <span class="${statusClass}">${
               site.status
             }</span></p>
                 <p>SSL Certificate: <span class="${
@@ -83,10 +85,6 @@
       document
         .getElementById("monitorNowButton")
         .addEventListener("click", () => {
-          // This button currently just reloads the status.json from the deployed site.
-          // Triggering a GitHub Action securely from here requires more advanced setup (e.g., a serverless function)
-          // to avoid exposing sensitive tokens.
-          // For now, it simply refreshes the displayed status from the latest 'status.json' available.
           loadStatus();
           alert(
             "Status refreshed from the latest data. To trigger a new check, you'd manually run the workflow on GitHub or set up an advanced trigger."

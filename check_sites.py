@@ -38,18 +38,21 @@ def check_site(url):
     status = "offline"
     ssl_status = "unknown"
     ssl_days_left = None
-    response_time = None # Initialize response_time
+    response_time = None
 
     try:
-        response = requests.get(url, timeout=10)
-        response_time = round(response.elapsed.total_seconds(), 2) # Capture response time in seconds, rounded to 2 decimal places
+        response = requests.get(url, timeout=5) # Changed timeout to 5 seconds
+        response_time = round(response.elapsed.total_seconds(), 2)
         if response.status_code == 200:
             status = "online"
         else:
             status = f"error {response.status_code}"
+    except requests.exceptions.Timeout:
+        status = "offline (timeout)" # More specific status for timeout
+        response_time = None
     except Exception:
         status = "offline"
-        response_time = None # Set to None if request fails
+        response_time = None
 
     try:
         parsed_url = urlparse(url)
@@ -73,7 +76,7 @@ def check_site(url):
         "status": status,
         "ssl_status": ssl_status,
         "ssl_days_left": ssl_days_left,
-        "response_time": response_time # Add response_time to the returned dict
+        "response_time": response_time
     }
 
 def main():
