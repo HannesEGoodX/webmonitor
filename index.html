@@ -1,35 +1,97 @@
-name: Website Monitor
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Website Status Monitor</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>Website Status Monitor</h1>
 
-on:
-  schedule:
-    - cron: "*/10 * * * *" # every 10 minutes
-  workflow_dispatch:
+    <div class="monitor-button-container">
+      <button id="monitorNowButton" class="monitor-button">Monitor Now</button>
+    </div>
 
-jobs:
-  monitor:
-    runs-on: ubuntu-latest
-    permissions: # ADD THIS BLOCK
-      contents: write # This grants write access to the repository contents
+    <div id="sites-container">Loading status...</div>
+    <footer>
+      <p>Last updated: <span id="last-updated">Loading...</span></p>
+    </footer>
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+    <script>
+      async function loadStatus() {
+        try {
+          const res = await fetch("status.json?" + new Date().getTime()); // prevent cache
+          if (!res.ok) throw new Error("Failed to load status.json");
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
+          const data = await res.json();
+          document.getElementById("last-updated").textContent =
+            data.last_checked;
 
-      - name: Install requests module
-        run: pip install requests
+          const container = document.getElementById("sites-container");
+          container.innerHTML = "";
 
-      - name: Run site check script
-        run: python check_sites.py # Corrected from check_files.py
+          data.sites.forEach((site) => {
+            const div = document.createElement("div");
+            div.className = "site";
 
-      - name: Commit and push status.json
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add status.json
-          git commit -m "Update status.json" || echo "No changes to commit"
-          git push
+            const sslDaysLeft =
+              site.ssl_days_left !== null
+                ? ` (expires in ${site.ssl_days_left} days)`
+                : "";
+
+            const responseTime =
+              site.response_time !== null
+                ? `Response Time: ${site.response_time} s`
+                : `Response Time: N/A`;
+
+            // Adjust status class for specific error codes if desired
+            let statusClass = "unknown-status"; // Default for unknown/error strings
+            if (site.status === "online") {
+              statusClass = "up";
+            } else if (
+              site.status === "offline" ||
+              site.status.startsWith("error")
+            ) {
+              statusClass = "down"; // Use 'down' for any offline or error code
+            }
+
+            div.innerHTML = `
+                <h2>${site.url}</h2>
+                <p>Status: <span class="${statusClass}">${
+              site.status
+            }</span></p>
+                <p>SSL Certificate: <span class="${
+                  site.ssl_status === "valid" ? "ssl-ok" : "ssl-expired"
+                }">${site.ssl_status}${sslDaysLeft}</span></p>
+                <p>${responseTime}</p>
+            `;
+
+            container.appendChild(div);
+          });
+        } catch (error) {
+          document.getElementById("sites-container").textContent =
+            "Error loading status.";
+          document.getElementById("last-updated").textContent = "";
+          console.error(error);
+        }
+      }
+
+      // Initial load
+      loadStatus();
+
+      document
+        .getElementById("monitorNowButton")
+        .addEventListener("click", () => {
+          // This button currently just reloads the status.json from the deployed site.
+          // Triggering a GitHub Action securely from here requires more advanced setup (e.g., a serverless function)
+          // to avoid exposing sensitive tokens.
+          // For now, it simply refreshes the displayed status from the latest 'status.json' available.
+          loadStatus();
+          alert(
+            "Status refreshed from the latest data. To trigger a new check, you'd manually run the workflow on GitHub or set up an advanced trigger."
+          );
+        });
+    </script>
+  </body>
+</html>
