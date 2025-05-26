@@ -9,14 +9,23 @@
   <body>
     <h1>Website Status Monitor</h1>
 
+    <div
+      id="last-updated-top"
+      style="
+        text-align: center;
+        margin-bottom: 1.5rem;
+        font-size: 0.9em;
+        color: #666;
+      "
+    >
+      Last updated: Loading...
+    </div>
+
     <div class="monitor-button-container">
       <button id="monitorNowButton" class="monitor-button">Monitor Now</button>
     </div>
 
     <div id="sites-container">Loading status...</div>
-    <footer>
-      <p>Last updated: <span id="last-updated">Loading...</span></p>
-    </footer>
 
     <script>
       async function loadStatus() {
@@ -25,8 +34,29 @@
           if (!res.ok) throw new Error("Failed to load status.json");
 
           const data = await res.json();
-          document.getElementById("last-updated").textContent =
-            data.last_checked;
+
+          // NEW: Convert UTC to SAST
+          const utcDateString = data.last_checked; // e.g., "2025-05-26 09:05:46 UTC"
+          // We need to parse it carefully as "UTC"
+          const date = new Date(utcDateString.replace(" UTC", "Z")); // Replace ' UTC' with 'Z' for ISO 8601 UTC string
+
+          // Options for SAST (South African Standard Time)
+          const options = {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false, // 24-hour format
+            timeZone: "Africa/Johannesburg", // SAST timezone
+            timeZoneName: "shortOffset", // e.g., GMT+2
+          };
+          const sastTimeString = date.toLocaleString("en-ZA", options); // 'en-ZA' for South African locale formatting
+
+          document.getElementById(
+            "last-updated-top"
+          ).textContent = `Last updated: ${sastTimeString}`;
 
           const container = document.getElementById("sites-container");
           container.innerHTML = "";
@@ -60,7 +90,8 @@
                   site.url
                 }" target="_blank" rel="noopener noreferrer">${
               site.url
-            }</a></h2> <p>Status: <span class="${statusClass}">${
+            }</a></h2>
+                <p>Status: <span class="${statusClass}">${
               site.status
             }</span></p>
                 <p>SSL Certificate: <span class="${
@@ -72,9 +103,10 @@
             container.appendChild(div);
           });
         } catch (error) {
+          document.getElementById("last-updated-top").textContent =
+            "Last updated: Error loading...";
           document.getElementById("sites-container").textContent =
             "Error loading status.";
-          document.getElementById("last-updated").textContent = "";
           console.error(error);
         }
       }
