@@ -1,40 +1,40 @@
 {
-  "last_checked": "2025-05-26 08:48:03 UTC",
+  "last_checked": "2025-05-26 08:52:37 UTC",
   "sites": [
     {
       "url": "https://gxqit.co.za",
       "status": "online",
       "ssl_status": "valid",
       "ssl_days_left": 39,
-      "response_time": 4.12
+      "response_time": 4.18
     },
     {
       "url": "https://goodx.co.za",
       "status": "online",
       "ssl_status": "valid",
       "ssl_days_left": 69,
-      "response_time": 1.08
+      "response_time": 1.47
     },
     {
       "url": "https://goodxhealthcare.ca",
       "status": "online",
       "ssl_status": "valid",
       "ssl_days_left": 89,
-      "response_time": 0.56
+      "response_time": 0.55
     },
     {
       "url": "https://goodx.co.nz",
       "status": "online",
       "ssl_status": "valid",
       "ssl_days_left": 76,
-      "response_time": 1.08
+      "response_time": 1.25
     },
     {
       "url": "https://goodxnamibia.com",
       "status": "online",
       "ssl_status": "valid",
       "ssl_days_left": 13,
-      "response_time": 1.12
+      "response_time": 1.24
     },
     {
       "url": "https://goodx.co.bw",
@@ -48,21 +48,21 @@
       "status": "online",
       "ssl_status": "valid",
       "ssl_days_left": 84,
-      "response_time": 1.09
+      "response_time": 1.23
     },
     {
       "url": "https://goodx.us",
       "status": "online",
       "ssl_status": "valid",
       "ssl_days_left": 57,
-      "response_time": 0.44
+      "response_time": 0.29
     },
     {
       "url": "https://goodx.international",
       "status": "online",
       "ssl_status": "valid",
       "ssl_days_left": 75,
-      "response_time": 1.08
+      "response_time": 2.04
     },
     {
       "url": "https://goodxeye.com",
