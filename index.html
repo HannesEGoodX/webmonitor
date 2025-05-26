@@ -39,27 +39,54 @@
   </head>
   <body>
     <h1>Website Status Monitor</h1>
-    <div class="site">
-      <h2>https://gxqit.co.za</h2>
-      <p>Status: <span class="up">Online</span></p>
-      <p>
-        SSL Certificate: <span class="ssl-ok">Valid (expires in 30 days)</span>
-      </p>
-    </div>
-    <div class="site">
-      <h2>https://goodx.co.za</h2>
-      <p>Status: <span class="up">Online</span></p>
-      <p>
-        SSL Certificate: <span class="ssl-ok">Valid (expires in 45 days)</span>
-      </p>
-    </div>
-    <div class="site">
-      <h2>https://goodx.healthcare</h2>
-      <p>Status: <span class="down">Offline</span></p>
-      <p>SSL Certificate: <span class="ssl-expired">Expired!</span></p>
-    </div>
+    <div id="sites-container">Loading status...</div>
     <footer>
-      <p>Last updated: <span id="last-updated">2025-05-26 15:00 UTC</span></p>
+      <p>Last updated: <span id="last-updated">Loading...</span></p>
     </footer>
+
+    <script>
+      async function loadStatus() {
+        try {
+          const res = await fetch("status.json?" + new Date().getTime()); // prevent cache
+          if (!res.ok) throw new Error("Failed to load status.json");
+
+          const data = await res.json();
+          document.getElementById("last-updated").textContent =
+            data.last_checked;
+
+          const container = document.getElementById("sites-container");
+          container.innerHTML = "";
+
+          data.sites.forEach((site) => {
+            const div = document.createElement("div");
+            div.className = "site";
+
+            const sslDaysLeft =
+              site.ssl_days_left !== null
+                ? ` (expires in ${site.ssl_days_left} days)`
+                : "";
+
+            div.innerHTML = `
+        <h2>${site.url}</h2>
+        <p>Status: <span class="${site.status === "online" ? "up" : "down"}">${
+              site.status
+            }</span></p>
+        <p>SSL Certificate: <span class="${
+          site.ssl_status === "valid" ? "ssl-ok" : "ssl-expired"
+        }">${site.ssl_status}${sslDaysLeft}</span></p>
+      `;
+
+            container.appendChild(div);
+          });
+        } catch (error) {
+          document.getElementById("sites-container").textContent =
+            "Error loading status.";
+          document.getElementById("last-updated").textContent = "";
+          console.error(error);
+        }
+      }
+
+      loadStatus();
+    </script>
   </body>
 </html>
