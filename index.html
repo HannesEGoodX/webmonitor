@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Website Status Monitor</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 2rem;
+        background: #f4f7f8;
+        color: #333;
+      }
+      h1 {
+        color: #0052cc;
+      }
+      .site {
+        background: white;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgb(0 0 0 / 0.1);
+      }
+      .up {
+        color: green;
+        font-weight: bold;
+      }
+      .down {
+        color: red;
+        font-weight: bold;
+      }
+      .ssl-ok {
+        color: green;
+      }
+      .ssl-expired {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Website Status Monitor</h1>
+    <div class="site">
+      <h2>https://gxqit.co.za</h2>
+      <p>Status: <span class="up">Online</span></p>
+      <p>
+        SSL Certificate: <span class="ssl-ok">Valid (expires in 30 days)</span>
+      </p>
+    </div>
+    <div class="site">
+      <h2>https://goodx.co.za</h2>
+      <p>Status: <span class="up">Online</span></p>
+      <p>
+        SSL Certificate: <span class="ssl-ok">Valid (expires in 45 days)</span>
+      </p>
+    </div>
+    <div class="site">
+      <h2>https://goodx.healthcare</h2>
+      <p>Status: <span class="down">Offline</span></p>
+      <p>SSL Certificate: <span class="ssl-expired">Expired!</span></p>
+    </div>
+    <footer>
+      <p>Last updated: <span id="last-updated">2025-05-26 15:00 UTC</span></p>
+    </footer>
+  </body>
+</html>
