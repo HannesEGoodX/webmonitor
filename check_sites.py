@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 from urllib.parse import urlparse
 import logging
+import time # Import the time module for delays
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -39,52 +40,89 @@ def check_ssl_expiry(hostname):
         logging.warning(f"SSL check failed for {hostname}: {e}")
         return None
 
-def check_site(url, num_pings=3, timeout=15): # Added num_pings and timeout parameters
-    successful_pings = 0
-    total_response_time = 0
+def check_site(url, http_timeout=15, max_retries=3, retry_delay=5): # Renamed timeout for clarity, added retries
     final_status = "offline"
     final_response_time = None
+    successful_ping_count = 0 # To count successful pings for the 3-consecutive-ping logic
 
-    logging.info(f"Checking site: {url} with {num_pings} pings...")
+    logging.info(f"Attempting to check: {url} with {max_retries} retries...")
 
-    for i in range(num_pings):
-        status_during_ping = "offline"
-        response_time_during_ping = None
+    # Loop for retries (to overcome transient connection issues)
+    for attempt in range(max_retries):
+        current_attempt_status = "offline"
+        current_attempt_response_time = None
         try:
-            response = requests.get(url, timeout=timeout, verify=True)
-            response_time_during_ping = round(response.elapsed.total_seconds(), 2)
+            response = requests.get(url, timeout=http_timeout, verify=True)
+            current_attempt_response_time = round(response.elapsed.total_seconds(), 2)
 
             if response.status_code == 200:
-                status_during_ping = "online"
-                successful_pings += 1
-                total_response_time += response_time_during_ping
-                logging.info(f"  Ping {i+1} for {url}: Online (200 OK) in {response_time_during_ping}s")
+                current_attempt_status = "online"
+                logging.info(f"  Attempt {attempt+1} for {url}: Online (200 OK) in {current_attempt_response_time}s")
+                # If we get a 200, we're good for this attempt, break retry loop and proceed to 3-ping logic
+                final_status = "online"
+                final_response_time = current_attempt_response_time
+                break # Exit retry loop if successful
             else:
-                status_during_ping = f"error {response.status_code}"
-                logging.warning(f"  Ping {i+1} for {url}: Responded with status code {response.status_code}")
+                current_attempt_status = f"error {response.status_code}"
+                logging.warning(f"  Attempt {attempt+1} for {url}: Responded with status code {response.status_code}. Retrying...")
 
         except requests.exceptions.Timeout:
-            status_during_ping = "offline (timeout)"
-            logging.error(f"  Ping {i+1} for {url}: Timed out after {timeout}s.")
+            current_attempt_status = "offline (timeout)"
+            logging.error(f"  Attempt {attempt+1} for {url}: Timed out after {http_timeout}s. Retrying...")
         except requests.exceptions.ConnectionError as e:
-            status_during_ping = "offline (connection error)"
-            logging.error(f"  Ping {i+1} for {url}: Connection error: {e}")
+            current_attempt_status = "offline (connection error)"
+            logging.error(f"  Attempt {attempt+1} for {url}: Connection error: {e}. Retrying...")
         except requests.exceptions.RequestException as e:
-            status_during_ping = "offline (request error)"
-            logging.error(f"  Ping {i+1} for {url}: Request error: {e}")
+            current_attempt_status = "offline (request error)"
+            logging.error(f"  Attempt {attempt+1} for {url}: Request error: {e}. Retrying...")
         except Exception as e:
-            status_during_ping = "offline (unexpected error)"
-            logging.error(f"  Ping {i+1} for {url}: Unexpected error: {e}")
+            current_attempt_status = "offline (unexpected error)"
+            logging.error(f"  Attempt {attempt+1} for {url}: Unexpected error: {e}. Retrying...")
 
-    if successful_pings == num_pings:
-        final_status = "online"
-        final_response_time = round(total_response_time / num_pings, 2)
-        logging.info(f"{url} is ONLINE (3 consecutive successful pings). Average response time: {final_response_time}s")
+        # If it's not the last attempt, wait before retrying
+        if attempt < max_retries - 1:
+            time.sleep(retry_delay)
+        else:
+            # If all retries failed, set the final status based on the last attempt's error
+            final_status = current_attempt_status
+            final_response_time = current_attempt_response_time
+
+
+    # Now, apply the 3-consecutive-successful-pings logic *after* overcoming initial connection issues.
+    # We'll run this check *only if* the initial retry loop determined the site was reachable at least once.
+    if final_status == "online":
+        logging.info(f"{url} was reachable. Now performing 3-consecutive-ping test...")
+        successful_pings_for_consecutive_check = 0
+        total_time_for_consecutive = 0
+
+        for i in range(3): # Hardcoding 3 pings for this specific logic
+            try:
+                response = requests.get(url, timeout=http_timeout, verify=True)
+                if response.status_code == 200:
+                    successful_pings_for_consecutive_check += 1
+                    total_time_for_consecutive += response.elapsed.total_seconds()
+                    logging.info(f"  Consecutive Ping {i+1} for {url}: Online (200 OK)")
+                else:
+                    logging.warning(f"  Consecutive Ping {i+1} for {url}: Status code {response.status_code}.")
+                    # If any of these 3 pings fails, the site is considered offline for this check
+                    successful_pings_for_consecutive_check = 0 # Reset count
+                    break # Break out of the consecutive loop
+            except requests.exceptions.RequestException as e:
+                logging.error(f"  Consecutive Ping {i+1} for {url}: Failed ({e}).")
+                successful_pings_for_consecutive_check = 0 # Reset count
+                break # Break out of the consecutive loop
+            time.sleep(1) # Small delay between consecutive pings
+
+        if successful_pings_for_consecutive_check == 3:
+            final_status = "online"
+            final_response_time = round(total_time_for_consecutive / 3, 2)
+            logging.info(f"{url} is CONFIRMED ONLINE (3 consecutive successful pings). Average response time: {final_response_time}s")
+        else:
+            final_status = "offline (failed 3-consecutive-ping test)"
+            final_response_time = None
+            logging.warning(f"{url} is OFFLINE (failed 3-consecutive-ping test).")
     else:
-        final_status = f"offline ({successful_pings}/{num_pings} pings successful)"
-        logging.warning(f"{url} is OFFLINE ({successful_pings}/{num_pings} pings successful).")
-        # If any ping failed, response_time is N/A
-        final_response_time = None 
+        logging.warning(f"{url} is OFFLINE (initial reachability check failed).")
 
 
     # SSL check part (remains unchanged)
