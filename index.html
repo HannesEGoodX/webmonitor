@@ -28,8 +28,7 @@
     <div id="sites-container">Loading status...</div>
 
     <script>
-      // Placeholder for your serverless function endpoint
-      // YOU WOULD REPLACE THIS WITH YOUR ACTUAL SERVERLESS FUNCTION URL
+      // This is the correct path for Netlify Functions
       const SERVERLESS_TRIGGER_URL =
         "/.netlify/functions/trigger-github-workflow";
 
@@ -115,27 +114,16 @@
 
       // Function to trigger the GitHub Actions workflow via a serverless function
       async function triggerWorkflow() {
-        if (
-          SERVERLESS_TRIGGER_URL === "YOUR_SERVERLESS_FUNCTION_ENDPOINT_HERE"
-        ) {
-          alert(
-            "To trigger a new check, you need to set up a secure serverless function. For now, this button only refreshes the displayed status from the latest 'status.json' available on GitHub Pages."
-          );
-          loadStatus(); // Still refreshes the current view
-          return;
-        }
-
         document.getElementById("monitorNowButton").disabled = true; // Disable button during trigger
         document.getElementById("monitorNowButton").textContent =
           "Triggering check...";
 
         try {
           const response = await fetch(SERVERLESS_TRIGGER_URL, {
-            method: "POST", // Or GET, depending on your serverless function setup
+            method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            // You might send specific data if your serverless function expects it
             body: JSON.stringify({ action: "trigger_site_monitor" }),
           });
 
@@ -143,14 +131,24 @@
             alert(
               "New site check triggered! It may take a minute for the status to update on GitHub Pages. Refreshing data now."
             );
+            // Give GitHub Actions a moment to run, then refresh the displayed data
             setTimeout(() => {
-              // Give GitHub Actions a moment to run
-              loadStatus(); // Refresh data from status.json
-            }, 5000); // Wait 5 seconds before refreshing the displayed data
+              loadStatus();
+            }, 5000);
           } else {
             const errorText = await response.text();
+            // Parse error text if it's JSON, otherwise display as is
+            let errorMessage = errorText;
+            try {
+              const errorJson = JSON.parse(errorText);
+              if (errorJson && errorJson.message) {
+                errorMessage = errorJson.message;
+              }
+            } catch (e) {
+              // Not JSON, use raw text
+            }
             alert(
-              `Failed to trigger check: ${errorText}. Please check serverless function logs.`
+              `Failed to trigger check: ${errorMessage}. Please check serverless function logs.`
             );
           }
         } catch (error) {

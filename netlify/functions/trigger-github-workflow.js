@@ -11,12 +11,12 @@ exports.handler = async function (event, context) {
 
   const GITHUB_TOKEN = process.env.GITHUB_PAT;
 
-  // --- IMPORTANT: REPLACE THESE PLACEHOLDERS ---
+  // --- IMPORTANT: THESE MUST BE YOUR ACTUAL GITHUB DETAILS ---
   const REPO_OWNER = "HannesEGoodX"; // Replace with your GitHub username (e.g., 'HannesEGoodX')
   const REPO_NAME = "webmonitor"; // This should be 'webmonitor' if that's your repo name
   const WORKFLOW_ID = "check_sites.yml";
   const REF_BRANCH = "main"; // Or 'master' if that's your default branch for GitHub Actions
-  // --- END REPLACE ---
+  // --- END IMPORTANT ---
 
   if (!GITHUB_TOKEN || !REPO_OWNER) {
     console.error("Missing GITHUB_PAT or REPO_OWNER environment variable.");
@@ -28,7 +28,7 @@ exports.handler = async function (event, context) {
 
   try {
     const response = await fetch(
-      `https://api.github.com/repos/<span class="math-inline">\{REPO\_OWNER\}/</span>{REPO_NAME}/actions/workflows/${WORKFLOW_ID}/dispatches`,
+      `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/actions/workflows/${WORKFLOW_ID}/dispatches`,
       {
         method: "POST",
         headers: {

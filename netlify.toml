@@ -1,0 +1,8 @@
+[build]
+  functions = "netlify/functions"
+  publish = "." # This means your static files (index.html, style.css) are in the root
+
+# If you need to specify a Node.js version for your functions (optional, but good practice)
+# [functions]
+#   node_bundler = "esbuild" # Modern bundler, usually faster
+#   node_version = "18" # Or "20", choose a version supported by Netlify
