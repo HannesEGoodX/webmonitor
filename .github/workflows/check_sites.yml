@@ -8,6 +8,8 @@ on:
 jobs:
   monitor:
     runs-on: ubuntu-latest
+    permissions: # ADD THIS BLOCK
+      contents: write # This grants write access to the repository contents
 
     steps:
       - name: Checkout repo
