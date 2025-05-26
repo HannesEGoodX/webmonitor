@@ -17,7 +17,7 @@ sites = [
     "https://goodxhealthcare.ca",
     "https://goodx.co.nz",
     "https://goodxnamibia.com",
-    "https://goodx.co.bw",
+    "https://goodx.co.bw", # This is the site in question
     "https://goodx.co.uk",
     "https://goodx.us",
     "https://goodx.international",
@@ -40,17 +40,19 @@ def check_ssl_expiry(hostname):
         logging.warning(f"SSL check failed for {hostname}: {e}")
         return None
 
-def check_site(url, http_timeout=15, max_retries=3, retry_delay=5): # Renamed timeout for clarity, added retries
+def check_site(url, http_timeout=30, max_retries=5, retry_delay=10): # UPDATED PARAMETERS
     final_status = "offline"
     final_response_time = None
-    successful_ping_count = 0 # To count successful pings for the 3-consecutive-ping logic
-
-    logging.info(f"Attempting to check: {url} with {max_retries} retries...")
+    
+    logging.info(f"Attempting to check: {url} with {max_retries} retries, {retry_delay}s delay...")
 
     # Loop for retries (to overcome transient connection issues)
     for attempt in range(max_retries):
         current_attempt_status = "offline"
         current_attempt_response_time = None
+        
+        logging.info(f"  Retry Attempt {attempt+1}/{max_retries} for {url}")
+
         try:
             response = requests.get(url, timeout=http_timeout, verify=True)
             current_attempt_response_time = round(response.elapsed.total_seconds(), 2)
@@ -58,32 +60,32 @@ def check_site(url, http_timeout=15, max_retries=3, retry_delay=5): # Renamed ti
             if response.status_code == 200:
                 current_attempt_status = "online"
                 logging.info(f"  Attempt {attempt+1} for {url}: Online (200 OK) in {current_attempt_response_time}s")
-                # If we get a 200, we're good for this attempt, break retry loop and proceed to 3-ping logic
-                final_status = "online"
+                final_status = "online" # Mark as online if any attempt succeeds
                 final_response_time = current_attempt_response_time
                 break # Exit retry loop if successful
             else:
                 current_attempt_status = f"error {response.status_code}"
-                logging.warning(f"  Attempt {attempt+1} for {url}: Responded with status code {response.status_code}. Retrying...")
+                logging.warning(f"  Attempt {attempt+1} for {url}: Responded with status code {response.status_code}.")
 
         except requests.exceptions.Timeout:
             current_attempt_status = "offline (timeout)"
-            logging.error(f"  Attempt {attempt+1} for {url}: Timed out after {http_timeout}s. Retrying...")
+            logging.error(f"  Attempt {attempt+1} for {url}: Timed out after {http_timeout}s.")
         except requests.exceptions.ConnectionError as e:
             current_attempt_status = "offline (connection error)"
-            logging.error(f"  Attempt {attempt+1} for {url}: Connection error: {e}. Retrying...")
+            logging.error(f"  Attempt {attempt+1} for {url}: Connection error: {e}.") # Now explicitly logging the error
         except requests.exceptions.RequestException as e:
             current_attempt_status = "offline (request error)"
-            logging.error(f"  Attempt {attempt+1} for {url}: Request error: {e}. Retrying...")
+            logging.error(f"  Attempt {attempt+1} for {url}: Request error: {e}.") # Now explicitly logging the error
         except Exception as e:
             current_attempt_status = "offline (unexpected error)"
-            logging.error(f"  Attempt {attempt+1} for {url}: Unexpected error: {e}. Retrying...")
+            logging.error(f"  Attempt {attempt+1} for {url}: Unexpected error: {e}.") # Now explicitly logging the error
 
-        # If it's not the last attempt, wait before retrying
-        if attempt < max_retries - 1:
+        # If it's not the last attempt AND we haven't succeeded, wait before retrying
+        if current_attempt_status != "online" and attempt < max_retries - 1:
+            logging.info(f"  Waiting {retry_delay}s before next retry for {url}...")
             time.sleep(retry_delay)
-        else:
-            # If all retries failed, set the final status based on the last attempt's error
+        elif current_attempt_status != "online" and attempt == max_retries - 1:
+            # If all retries failed, the final status is the last attempt's status
             final_status = current_attempt_status
             final_response_time = current_attempt_response_time
 
@@ -91,27 +93,29 @@ def check_site(url, http_timeout=15, max_retries=3, retry_delay=5): # Renamed ti
     # Now, apply the 3-consecutive-successful-pings logic *after* overcoming initial connection issues.
     # We'll run this check *only if* the initial retry loop determined the site was reachable at least once.
     if final_status == "online":
-        logging.info(f"{url} was reachable. Now performing 3-consecutive-ping test...")
+        logging.info(f"{url} was initially reachable. Now performing 3-consecutive-ping test...")
         successful_pings_for_consecutive_check = 0
         total_time_for_consecutive = 0
 
         for i in range(3): # Hardcoding 3 pings for this specific logic
             try:
-                response = requests.get(url, timeout=http_timeout, verify=True)
+                # Use the same timeout as the initial check for consistency
+                response = requests.get(url, timeout=http_timeout, verify=True) 
                 if response.status_code == 200:
                     successful_pings_for_consecutive_check += 1
                     total_time_for_consecutive += response.elapsed.total_seconds()
                     logging.info(f"  Consecutive Ping {i+1} for {url}: Online (200 OK)")
                 else:
-                    logging.warning(f"  Consecutive Ping {i+1} for {url}: Status code {response.status_code}.")
-                    # If any of these 3 pings fails, the site is considered offline for this check
+                    logging.warning(f"  Consecutive Ping {i+1} for {url}: Status code {response.status_code}. Breaking consecutive test.")
                     successful_pings_for_consecutive_check = 0 # Reset count
                     break # Break out of the consecutive loop
             except requests.exceptions.RequestException as e:
-                logging.error(f"  Consecutive Ping {i+1} for {url}: Failed ({e}).")
+                logging.error(f"  Consecutive Ping {i+1} for {url}: Failed ({e}). Breaking consecutive test.")
                 successful_pings_for_consecutive_check = 0 # Reset count
                 break # Break out of the consecutive loop
-            time.sleep(1) # Small delay between consecutive pings
+            
+            if i < 2: # Only sleep if there are more pings to do
+                time.sleep(1) # Small delay between consecutive pings
 
         if successful_pings_for_consecutive_check == 3:
             final_status = "online"
@@ -122,7 +126,7 @@ def check_site(url, http_timeout=15, max_retries=3, retry_delay=5): # Renamed ti
             final_response_time = None
             logging.warning(f"{url} is OFFLINE (failed 3-consecutive-ping test).")
     else:
-        logging.warning(f"{url} is OFFLINE (initial reachability check failed).")
+        logging.warning(f"{url} is OFFLINE (initial reachability check failed after all retries).")
 
 
     # SSL check part (remains unchanged)
