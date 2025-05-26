@@ -28,6 +28,11 @@
     <div id="sites-container">Loading status...</div>
 
     <script>
+      // Placeholder for your serverless function endpoint
+      // YOU WOULD REPLACE THIS WITH YOUR ACTUAL SERVERLESS FUNCTION URL
+      const SERVERLESS_TRIGGER_URL =
+        "/.netlify/functions/trigger-github-workflow";
+
       async function loadStatus() {
         try {
           const res = await fetch("status.json?" + new Date().getTime()); // prevent cache
@@ -35,12 +40,9 @@
 
           const data = await res.json();
 
-          // NEW: Convert UTC to SAST
-          const utcDateString = data.last_checked; // e.g., "2025-05-26 09:05:46 UTC"
-          // We need to parse it carefully as "UTC"
-          const date = new Date(utcDateString.replace(" UTC", "Z")); // Replace ' UTC' with 'Z' for ISO 8601 UTC string
+          const utcDateString = data.last_checked;
+          const date = new Date(utcDateString.replace(" UTC", "Z"));
 
-          // Options for SAST (South African Standard Time)
           const options = {
             year: "numeric",
             month: "2-digit",
@@ -48,11 +50,11 @@
             hour: "2-digit",
             minute: "2-digit",
             second: "2-digit",
-            hour12: false, // 24-hour format
-            timeZone: "Africa/Johannesburg", // SAST timezone
-            timeZoneName: "shortOffset", // e.g., GMT+2
+            hour12: false,
+            timeZone: "Africa/Johannesburg",
+            timeZoneName: "shortOffset",
           };
-          const sastTimeString = date.toLocaleString("en-ZA", options); // 'en-ZA' for South African locale formatting
+          const sastTimeString = date.toLocaleString("en-ZA", options);
 
           document.getElementById(
             "last-updated-top"
@@ -111,17 +113,62 @@
         }
       }
 
+      // Function to trigger the GitHub Actions workflow via a serverless function
+      async function triggerWorkflow() {
+        if (
+          SERVERLESS_TRIGGER_URL === "YOUR_SERVERLESS_FUNCTION_ENDPOINT_HERE"
+        ) {
+          alert(
+            "To trigger a new check, you need to set up a secure serverless function. For now, this button only refreshes the displayed status from the latest 'status.json' available on GitHub Pages."
+          );
+          loadStatus(); // Still refreshes the current view
+          return;
+        }
+
+        document.getElementById("monitorNowButton").disabled = true; // Disable button during trigger
+        document.getElementById("monitorNowButton").textContent =
+          "Triggering check...";
+
+        try {
+          const response = await fetch(SERVERLESS_TRIGGER_URL, {
+            method: "POST", // Or GET, depending on your serverless function setup
+            headers: {
+              "Content-Type": "application/json",
+            },
+            // You might send specific data if your serverless function expects it
+            body: JSON.stringify({ action: "trigger_site_monitor" }),
+          });
+
+          if (response.ok) {
+            alert(
+              "New site check triggered! It may take a minute for the status to update on GitHub Pages. Refreshing data now."
+            );
+            setTimeout(() => {
+              // Give GitHub Actions a moment to run
+              loadStatus(); // Refresh data from status.json
+            }, 5000); // Wait 5 seconds before refreshing the displayed data
+          } else {
+            const errorText = await response.text();
+            alert(
+              `Failed to trigger check: ${errorText}. Please check serverless function logs.`
+            );
+          }
+        } catch (error) {
+          alert(`Error connecting to trigger service: ${error.message}`);
+        } finally {
+          document.getElementById("monitorNowButton").disabled = false;
+          document.getElementById("monitorNowButton").textContent =
+            "Monitor Now";
+        }
+      }
+
       // Initial load
       loadStatus();
 
+      // Add event listener for the "Monitor Now" button
       document
         .getElementById("monitorNowButton")
-        .addEventListener("click", () => {
-          loadStatus();
-          alert(
-            "Status refreshed from the latest data. To trigger a new check, you'd manually run the workflow on GitHub or set up an advanced trigger."
-          );
-        });
+        .addEventListener("click", triggerWorkflow);
     </script>
   </body>
 </html>
