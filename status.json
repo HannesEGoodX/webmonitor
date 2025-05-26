@@ -1,12 +1,12 @@
 {
-  "last_checked": "2025-05-26 09:14:22 UTC",
+  "last_checked": "2025-05-26 09:57:37 UTC",
   "sites": [
     {
       "url": "https://gxqit.co.za",
       "status": "online",
       "ssl_status": "valid",
       "ssl_days_left": 39,
-      "response_time": 4.8
+      "response_time": 4.03
     },
     {
       "url": "https://goodx.co.za",
@@ -20,25 +20,25 @@
       "status": "online",
       "ssl_status": "valid",
       "ssl_days_left": 89,
-      "response_time": 1.7
+      "response_time": 0.59
     },
     {
       "url": "https://goodx.co.nz",
       "status": "online",
       "ssl_status": "valid",
       "ssl_days_left": 76,
-      "response_time": 1.42
+      "response_time": 1.38
     },
     {
       "url": "https://goodxnamibia.com",
       "status": "online",
       "ssl_status": "valid",
       "ssl_days_left": 13,
-      "response_time": 1.44
+      "response_time": 1.38
     },
     {
       "url": "https://goodx.co.bw",
-      "status": "offline",
+      "status": "offline (connection error)",
       "ssl_status": "valid",
       "ssl_days_left": 33,
       "response_time": null
@@ -48,14 +48,14 @@
       "status": "online",
       "ssl_status": "valid",
       "ssl_days_left": 84,
-      "response_time": 1.5
+      "response_time": 1.36
     },
     {
       "url": "https://goodx.us",
       "status": "online",
       "ssl_status": "valid",
       "ssl_days_left": 57,
-      "response_time": 0.18
+      "response_time": 0.15
     },
     {
       "url": "https://goodx.international",
@@ -66,28 +66,28 @@
     },
     {
       "url": "https://goodxeye.com",
-      "status": "offline",
+      "status": "offline (connection error)",
       "ssl_status": "unknown",
       "ssl_days_left": null,
       "response_time": null
     },
     {
       "url": "https://goodx.cloud",
-      "status": "offline",
+      "status": "offline (connection error)",
       "ssl_status": "unknown",
       "ssl_days_left": null,
       "response_time": null
     },
     {
       "url": "https://aditiv.co.za",
-      "status": "offline",
+      "status": "offline (connection error)",
       "ssl_status": "valid",
       "ssl_days_left": 47,
       "response_time": null
     },
     {
       "url": "https://www.imprimatur.co.za",
-      "status": "offline",
+      "status": "offline (connection error)",
       "ssl_status": "valid",
       "ssl_days_left": 57,
       "response_time": null
